@@ -4,7 +4,7 @@
 #quay.io,opencloudio/ibm-auditlogging-operator,3.7.1,sha256:14a06923d21e20f5831878cc2f450b21d143afd88eb0fb7eb2bae7194ab62901,LIST,"","","",0,CASE,""
 
 # skopeo copy --src-cert-dir /root/.airgap/certs --debug docker://mut-repos-mirror-01.infra.asten:5000/cp/cp4mcm/admission-controller:2.1.6-ibm-management-image-security-enforcement-ppc64le dir:/var/lib/repo/cp4mcm/2.1.6/offline/cp4mcm-registry
-Parallel=5
+Parallel=5 # parallelism of transfer, you can optimize depending of your environment
 Count=1
 Filelist=$0.lst
 Arg1=
@@ -34,12 +34,16 @@ do
 		"--force"|"-f") # To force Copy with file $Filelist.digest-error
 		Arg5="force"
 		Force=True;;
+		"--from-internet-registry"|"-fir") # To force Copy with file $Filelist.digest-error
+		Arg6="fir"
+		From-internet-registry=True;;
 		"help"|"-h"|"--help")
-			echo $0" 				: list and verify only the Digest SHA256 between registry and directory. Source images information comes from *.csv files"
+			echo $0" 			: list and verify only the Digest SHA256 between registry and directory. Source images information comes from *.csv files"
 			echo $0" refresh 		: Do the copy from registry to directory when Digest SH256 are different Registry is the source."
-			echo $0" <search value> : run the command by filtering with the value."
+			echo $0" <search value> 	: run the command by filtering with the value."
 			echo $0" --force | -f 	: To force skopeo copy with file $Filelist.digest-error."
 			echo $0" --dotar 		: Do one tar file in cp4mcm-registry for each image repository newly generated."
+			echo $0" --from-internet-registry| -fir	: take source of registry on internet as specified in *-images.csv file"
 			echo $0" --debug | -d 	: More info displayed to debug."
 		       	exit;;
 		*) # All other options unknown are used 
@@ -51,6 +55,7 @@ done
 if [ -z $EXTERNAL_DOCKER_USER ]
 then
 	echo $0" : check the environment variable, perhaps use source ~/.registry to initialize."
+	echo "i$EXTERNAL_DOCKER_USER:$EXTERNAL_DOCKER_PASSWORD"
 	exit
 fi
 
@@ -159,4 +164,11 @@ for Image_tag in $(cat $Filelist.digest-error)
     echo "tar -xf ${f}.tar"
     echo "cd  /var/lib/tempo/ && bash skopeo-verify-digest-source.sh ${Arg2} refresh"
   done
+fi
+
+# to use the internet registry specified in images.csv file
+if [ "$From-internet-registry" == "True" ]
+then
+  echo "building ..."
+  exit
 fi
