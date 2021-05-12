@@ -14,6 +14,7 @@ Refresh=False
 Debug=False
 Force=False
 # not used for the moment to check if it is a good idea :
+CP4MCM_dir=
 Registry_dir="./offline/cp4mcm-registry" 
 External_registry=localrepos.infra.asten:5000
 Local_registry=ocregistry.infra.asten:5000
@@ -34,29 +35,51 @@ do
 		"--force"|"-f") # To force Copy with file $Filelist.digest-error
 		Arg5="force"
 		Force=True;;
-		"--from-internet-registry"|"-fir") # To force Copy with file $Filelist.digest-error
-		Arg6="fir"
-		From-internet-registry=True;;
+		"--Internet-registry"|"-ir") # To force Copy with file $Filelist.digest-error
+		Arg6="ir"
+		export Internet_registry=True;;
+		"--dir"|"-D") # To specify CP4MCM directory
+		shift 1
+		Arg7=$i
+		export CP4MCM_dir=$(echo $*|awk '{print $1}')
+		continue 2
+		;;
 		"help"|"-h"|"--help")
 			echo $0" 			: list and verify only the Digest SHA256 between registry and directory. Source images information comes from *.csv files"
 			echo $0" refresh 		: Do the copy from registry to directory when Digest SH256 are different Registry is the source."
 			echo $0" <search value> 	: run the command by filtering with the value."
 			echo $0" --force | -f 	: To force skopeo copy with file $Filelist.digest-error."
 			echo $0" --dotar 		: Do one tar file in cp4mcm-registry for each image repository newly generated."
-			echo $0" --from-internet-registry| -fir	: take source of registry on internet as specified in *-images.csv file"
+			echo $0" --Internet-registry| -ir	: take source of registry on internet as specified in *-images.csv file"
 			echo $0" --debug | -d 	: More info displayed to debug."
 		       	exit;;
 		*) # All other options unknown are used 
-			Filtre=$Filtre" "$i
-			Arg2=$Filtre;;
+			if [ "$i" != "$CP4MCM_dir" ]
+			then
+				Filtre=$Filtre" "$i
+				Arg2=$Filtre
+			fi
+			;;
 	esac		
 done
 # check environnment
 if [ -z $EXTERNAL_DOCKER_USER ]
 then
-	echo $0" : check the environment variable, perhaps use source ~/.registry to initialize."
-	echo "i$EXTERNAL_DOCKER_USER:$EXTERNAL_DOCKER_PASSWORD"
+	echo $0" : check the environment variable, perhaps use source ~/.registry to initialize or ~/.cp4mcm"
+	echo "EXTERNAL_DOCKER_USER and EXTERNAL_DOCKER_PASSWORD must be set"
 	exit
+fi
+# specify CP4MCM directory
+if [ ! -z $CP4MCM_dir ]
+then
+	echo "CP4MCM_dir : "$CP4MCM_dir
+	echo "Filtre : "$Filtre
+fi
+# to use the internet registry specified in images.csv file
+if [ "$Internet_registry" == "True" ]
+then
+  echo "building ..."
+  exit
 fi
 
 # to create the liste file
@@ -166,9 +189,3 @@ for Image_tag in $(cat $Filelist.digest-error)
   done
 fi
 
-# to use the internet registry specified in images.csv file
-if [ "$From-internet-registry" == "True" ]
-then
-  echo "building ..."
-  exit
-fi
