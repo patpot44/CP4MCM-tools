@@ -25,24 +25,35 @@ for i in $@
 do 
 	case $i in
 		"refresh") # Do the copy from registry to directory when Digest SH256 are different Registry is the source
-		Refresh=True
-		Arg1="refresh";;
+			Refresh=True
+			Arg1="refresh"
+		;;
 		"-dotar") # Do one tar file in cp4mcm-registry for each image repository newly generated
-		Arg3="dotar";;
+			Arg3="dotar"
+		;;
 		"--debug"|"-d") # More info displayed to debug
-		Arg4="debug"
-		Debug=True;;
+			Arg4="debug"
+			Debug=True
+		;;
 		"--force"|"-f") # To force Copy with file $Filelist.digest-error
-		Arg5="force"
-		Force=True;;
+			Arg5="force"
+			Force=True
+		;;
 		"--Internet-registry"|"-ir") # To force Copy with file $Filelist.digest-error
 		Arg6="ir"
 		export Internet_registry=True;;
 		"--dir"|"-D") # To specify CP4MCM directory
-		shift 1
-		Arg7=$i
-		export CP4MCM_dir=$(echo $*|awk '{print $1}')
-		continue 2
+		 	shift 1
+			Arg7=$i
+			export CP4MCM_dir=$(echo $*|awk '{print $1}')
+			continue 2
+		;;
+		*) # All other options unknown are used 
+			if [ "$i" != "$CP4MCM_dir" ]
+			then
+				Filtre=$Filtre" "$i
+				Arg2=$Filtre
+			fi
 		;;
 		"help"|"-h"|"--help")
 			echo $0" 			: list and verify only the Digest SHA256 between registry and directory. Source images information comes from *.csv files"
@@ -52,14 +63,8 @@ do
 			echo $0" --dotar 		: Do one tar file in cp4mcm-registry for each image repository newly generated."
 			echo $0" --Internet-registry| -ir	: take source of registry on internet as specified in *-images.csv file"
 			echo $0" --debug | -d 	: More info displayed to debug."
-		       	exit;;
-		*) # All other options unknown are used 
-			if [ "$i" != "$CP4MCM_dir" ]
-			then
-				Filtre=$Filtre" "$i
-				Arg2=$Filtre
-			fi
-			;;
+		 	exit
+		;;
 	esac		
 done
 # check environnment
